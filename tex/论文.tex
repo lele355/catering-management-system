@@ -1,0 +1,318 @@
+\documentclass[11pt, a4paper]{article}
+
+% --- 导言区：基础设置 ---
+\usepackage[a4paper, top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm]{geometry}
+\usepackage{fontspec}
+
+% 语言包设置
+\usepackage[chinese, provide=*]{babel}
+
+% --- 字体设置 (宋体 FandolSong) ---
+\babelfont{rm}{FandolSong}
+\babelfont[chinese]{rm}{FandolSong}
+\babelfont[chinese]{sf}{FandolSong} % 标题也强制使用宋体
+
+% --- 浮动体位置强制 (新增：float 宏包) ---
+\usepackage{float}
+
+% --- 代码高亮 ---
+\usepackage{listings}
+\usepackage{xcolor}
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny,
+    keywordstyle=\color{blue},
+    commentstyle=\color{green!50!black},
+    stringstyle=\color{red}
+}
+
+% --- 其他宏包 ---
+\usepackage{enumitem} % 用于列表定制
+\setlist[itemize]{label=$\bullet$} % 设置列表符号
+\usepackage{booktabs} % 用于专业表格 (三线表)
+\usepackage{array}    % 用于表格列格式
+\usepackage{hyperref} % 用于超链接和目录跳转
+
+% --- 标题格式设置 (居中显示) ---
+\usepackage{titlesec}
+% 1. 有编号的标题 (如 "1. 系统概述")
+\titleformat{\section}
+  {\centering\Large\bfseries\sffamily} % 居中、大号、加粗、宋体
+  {\thesection}
+  {1em}
+  {}
+
+% 2. 无编号的标题 (如 "目录")
+\titleformat{name=\section,numberless}
+  {\centering\Large\bfseries\sffamily}
+  {}
+  {0em}
+  {}
+
+% --- 文档信息 ---
+\title{\textbf{餐饮管理系统设计规划书}}
+\author{管理信息系统课程设计小组}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+\newpage
+
+\section{系统概述}
+本系统旨在为连锁餐饮企业提供一套基于 B/S 架构（浏览器/服务器模式）的门店管理解决方案。系统设计目标是实现从顾客点餐、后厨制作到前台收银的全流程数字化管理，有效解决传统纸质单据易丢失、信息传递滞后以及数据统计困难的问题，从而提升门店运营效率和顾客满意度。
+
+\section{系统功能结构设计}
+根据业务需求分析，本系统划分为三大核心功能模块，分别服务于不同的业务角色：
+
+\begin{itemize}
+    \item \textbf{前台点餐模块 (服务员端)}
+    \begin{itemize}
+        \item \textbf{桌台状态管理}：直观展示餐厅桌位分布，用不同颜色区分空闲、占用、预订状态，支持开台操作。
+        \item \textbf{点餐服务}：提供电子菜单浏览，支持按分类查找菜品，添加菜品至购物车并提交订单。
+        \item \textbf{订单管理}：实时查看当前桌台的订单状态（如：待制作、制作中、已上菜），支持加菜和退菜操作。
+        \item \textbf{收银结算}：自动计算订单总金额，支持多种支付方式记录，结算完成后释放桌台资源。
+    \end{itemize}
+    
+    \item \textbf{后厨制作模块 (厨师端)}
+    \begin{itemize}
+        \item \textbf{任务看板}：实时刷新显示待制作的菜品列表，支持按“下单时间”或“菜品分类”排序，避免漏单。
+        \item \textbf{出餐确认}：厨师制作完成后，在系统点击“完成”，系统自动通知前台或传菜员，状态更新为“已出餐”。
+    \end{itemize}
+    
+    \item \textbf{后台管理模块 (管理员端)}
+    \begin{itemize}
+        \item \textbf{菜品管理}：支持菜品的新增、修改（价格、图片）、删除，以及菜品分类（热菜、凉菜、酒水）的维护。
+        \item \textbf{用户管理}：管理系统操作人员账号，分配不同角色（管理员、服务员、厨师）的权限。
+        \item \textbf{营业报表}：自动生成每日销售流水报表，统计最热销菜品，辅助经营决策。
+    \end{itemize}
+\end{itemize}
+
+\section{数据库概念设计 (E-R模型分析)}
+为了支持上述功能，系统定义了以下6个核心实体及其相互关系：
+
+\subsection{核心实体}
+\begin{enumerate}
+    \item \textbf{用户 (User)}：系统的操作人员，包含管理员、服务员和厨师。
+    \item \textbf{桌台 (Table)}：餐厅的物理餐桌资源。
+    \item \textbf{菜品 (Dish)}：菜单上可供点选的单品。
+    \item \textbf{菜品分类 (Category)}：对菜品的归类，如热菜、主食。
+    \item \textbf{订单 (Order)}：一次完整的就餐交易记录。
+    \item \textbf{订单明细 (OrderDetail)}：\textbf{【关键实体】} 用于记录一个订单中包含的具体菜品及其数量，解决了“订单”与“菜品”之间的多对多关系。
+\end{enumerate}
+
+\subsection{实体关系描述}
+\begin{itemize}
+    \item \textbf{菜品分类 -- 菜品}：1:N (一对多)。一个分类下包含多个菜品，一个菜品属于一个分类。
+    \item \textbf{桌台 -- 订单}：1:N (一对多)。一张桌子在历史上可以产生多个订单，但在同一时间点只能关联一个“进行中”的订单。
+    \item \textbf{订单 -- 订单明细}：1:N (一对多)。一个订单包含多条明细记录（点了多个菜）。
+    \item \textbf{菜品 -- 订单明细}：1:N (一对多)。一种菜品可以出现在多个不同的订单明细中。
+    \item \textbf{用户 -- 订单}：1:N (一对多)。一个服务员可以负责开启多个订单。
+\end{itemize}
+
+\section{数据库逻辑设计 (核心表结构)}
+基于E-R模型分析，本系统设计了以下5张核心数据表。
+
+\subsection{Table: Staffs (用户表)}
+用于存储系统所有角色的登录信息。
+\begin{table}[H] % 使用 [H] 强制位置
+    \centering
+    \begin{tabular}{p{0.3\textwidth} p{0.2\textwidth} p{0.4\textwidth}}
+        \toprule
+        \textbf{中文列名} & \textbf{类型} & \textbf{说明/约束} \\
+        \midrule
+        用户编号 & INT & 主键，自增 \\
+        登录账号 & VARCHAR & 唯一约束 (Unique) \\
+        登录密码 & VARCHAR & 加密存储 \\
+        角色权限 & VARCHAR & Manager/Waiter/Chef \\
+        真实姓名 & VARCHAR & 员工实名 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Table: Dishes (菜品表)}
+存储菜单信息。
+\begin{table}[H] % 使用 [H] 强制位置
+    \centering
+    \begin{tabular}{p{0.3\textwidth} p{0.2\textwidth} p{0.4\textwidth}}
+        \toprule
+        \textbf{中文列名} & \textbf{类型} & \textbf{说明/约束} \\
+        \midrule
+        菜品编号 & INT & 主键，自增 \\
+        菜品名称 & NVARCHAR &  \\
+        所属分类 & NVARCHAR & 如：热菜、凉菜 \\
+        单价 & DECIMAL & 精确到小数点后两位 \\
+        上架状态 & BIT & 1:上架, 0:下架 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Table: DiningTables (桌台表)}
+管理餐厅的桌位资源。
+\begin{table}[H] % 使用 [H] 强制位置
+    \centering
+    \begin{tabular}{p{0.3\textwidth} p{0.2\textwidth} p{0.4\textwidth}}
+        \toprule
+        \textbf{中文列名} & \textbf{类型} & \textbf{说明/约束} \\
+        \midrule
+        桌号编号 & INT & 主键 \\
+        桌台名称 & NVARCHAR & 如: 1号桌, 包间A \\
+        当前状态 & NVARCHAR & Free(空闲)/Occupied(使用中) \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Table: Orders (订单主表)}
+记录每次就餐的总体信息。
+\begin{table}[H] % 使用 [H] 强制位置
+    \centering
+    \begin{tabular}{p{0.3\textwidth} p{0.2\textwidth} p{0.4\textwidth}}
+        \toprule
+        \textbf{中文列名} & \textbf{类型} & \textbf{说明/约束} \\
+        \midrule
+        订单编号 & INT & 主键 \\
+        关联桌号 & INT & 外键 (FK) \\
+        开单员工 & INT & 外键 (FK) \\
+        下单时间 & DATETIME & 默认为当前时间 \\
+        订单总额 & DECIMAL & 计算字段 \\
+        订单状态 & NVARCHAR & Pending(进行中)/Paid(已结) \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Table: OrderDetails (订单明细表)}
+\textbf{核心关联表}，用于记录具体的点菜内容。
+\begin{table}[H] % 使用 [H] 强制位置
+    \centering
+    \begin{tabular}{p{0.3\textwidth} p{0.2\textwidth} p{0.4\textwidth}}
+        \toprule
+        \textbf{中文列名} & \textbf{类型} & \textbf{说明/约束} \\
+        \midrule
+        明细编号 & INT & 主键 \\
+        所属订单 & INT & 外键 (FK) \\
+        关联菜品 & INT & 外键 (FK) \\
+        点菜数量 & INT &  \\
+        锁定单价 & DECIMAL & 防止后续菜品改价影响旧账 \\
+        制作状态 & NVARCHAR & Waiting(待做)/Done(已出) \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+
+\section{系统的设计与实现}
+
+本章主要介绍餐饮管理系统的具体实现过程。系统基于B/S架构，前端采用ASP.NET Web Forms技术，后端使用C\#语言进行逻辑处理，并通过ADO.NET技术与SQL Server数据库进行交互。系统主要分为用户登录、后台管理、前台点餐及后厨管理四大功能模块。
+
+\subsection{系统开发环境与架构}
+本系统采用Visual Studio作为集成开发环境，Microsoft SQL Server作为数据库管理系统。系统架构设计遵循经典的三层架构思想，但在ASP.NET Web Forms的实际开发中，主要体现为以下结构：
+
+\begin{itemize}
+    \item \textbf{表示层 (View)}: 由 `.aspx` 页面文件构成，负责页面的布局与用户交互，使用了 HTML、CSS 以及 ASP.NET 服务器控件。
+    \item \textbf{逻辑层 (Code-Behind)}: 由 `.aspx.cs` 文件构成，处理页面事件（如按钮点击、页面加载），实现业务逻辑判断。
+    \item \textbf{数据访问}: 通过 `System.Data.SqlClient` 命名空间下的 `SqlConnection`、`SqlCommand` 等对象直接执行SQL语句或存储过程。
+\end{itemize}
+
+\subsection{数据库连接的实现}
+为了提高系统的可维护性与安全性，数据库连接字符串配置在 `Web.config` 文件中。在进行数据库操作时，通过读取配置文件建立连接。
+
+\begin{lstlisting}[language=XML, caption={Web.config中的数据库连接配置}, label={code:webconfig}]
+<configuration>
+  <connectionStrings>
+    <add name="CateringDbConn" 
+         connectionString="Data Source=.;Initial Catalog=CateringSystem;Integrated Security=True" 
+         providerName="System.Data.SqlClient" />
+  </connectionStrings>
+</configuration>
+\end{lstlisting}
+
+在C\#代码中，通过 `ConfigurationManager` 类获取连接字符串，如下所示：
+
+\begin{lstlisting}[language={[Sharp]C}, caption={C\#中获取数据库连接}, label={code:dbconn}]
+string connStr = ConfigurationManager.ConnectionStrings["CateringDbConn"].ConnectionString;
+using (SqlConnection conn = new SqlConnection(connStr))
+{
+    conn.Open();
+    // 执行数据库操作
+}
+\end{lstlisting}
+
+\subsection{核心功能模块实现}
+
+\subsubsection{用户登录模块 (Login.aspx)}
+登录模块是系统的入口，负责验证用户的身份（管理员或员工）。页面主要包含用户名输入框、密码输入框及登录按钮。
+
+\textbf{实现逻辑：}
+\begin{enumerate}
+    \item 用户在 `Login.aspx` 页面输入账号密码。
+    \item 点击登录按钮触发 \texttt{btn\_Login\_Click} 事件。
+    \item 后端构建SQL查询语句，在 `Staff` 表中匹配用户名和密码。
+    \item 验证成功后，将用户信息存储在 `Session["User"]` 中，并根据用户角色（Admin或Staff）重定向到 `AdminDashboard.aspx` 或 `Menu.aspx`。
+\end{enumerate}
+
+\subsubsection{菜品管理模块 (ManageDishes.aspx)}
+菜品管理模块允许管理员对菜单进行增删改查操作。界面使用 `GridView` 控件展示现有菜品列表，并结合 `FileUpload` 控件实现菜品图片的上传。
+
+\textbf{关键技术实现：}
+\begin{itemize}
+    \item \textbf{数据绑定}: 在 \texttt{Page\_Load} 事件中，判断 `!IsPostBack` 后调用 `BindDishes()` 方法，通过 `SqlDataAdapter` 填充 `DataTable` 并绑定到 GridView。
+    \item \textbf{图片上传}: 添加新菜品时，系统检查 `FileUpload` 控件是否有文件，将图片保存到服务器的 `/Images/` 目录下，并将相对路径存储到数据库中。
+\end{itemize}
+
+\begin{lstlisting}[language={[Sharp]C}, caption={菜品数据绑定逻辑}, label={code:binddish}]
+private void BindDishes()
+{
+    string sql = "SELECT * FROM Dishes";
+    using (SqlConnection conn = new SqlConnection(connStr))
+    {
+        SqlDataAdapter da = new SqlDataAdapter(sql, conn);
+        DataTable dt = new DataTable();
+        da.Fill(dt);
+        gvDishes.DataSource = dt;
+        gvDishes.DataBind();
+    }
+}
+\end{lstlisting}
+
+\subsubsection{前台点餐与购物车模块 (Menu.aspx \& CartItem.cs)}
+点餐模块是系统的核心业务部分。为了管理用户选择的菜品，系统定义了 `CartItem` 类作为数据传输对象。
+
+\textbf{1. 购物车实体类设计 (CartItem.cs):}
+该类包含菜品ID、名称、单价、数量和总价属性，用于在内存中暂存用户点选的商品。
+
+\begin{lstlisting}[language={[Sharp]C}, caption={CartItem类定义}, label={code:cartitem}]
+public class CartItem
+{
+    public int DishId { get; set; }
+    public string DishName { get; set; }
+    public decimal Price { get; set; }
+    public int Quantity { get; set; }
+    public decimal Total => Price * Quantity;
+}
+\end{lstlisting}
+
+\textbf{2. 购物车逻辑实现:}
+当用户在 `Menu.aspx` 点击“加入订单”时，系统将选中的菜品实例化为 `CartItem` 对象，并将其存储在 `Session["Cart"]` 列表中。如果Session中已存在该菜品，则仅增加数量；否则添加新项。这实现了跨页面的状态保持。
+
+\subsubsection{后厨显示系统 (Kitchen.aspx)}
+后厨模块用于厨师查看当前待制作的菜品。为了保证信息的实时性，该页面设计了针对订单状态的过滤逻辑。
+
+\textbf{实现逻辑：}
+页面加载时，查询数据库中状态为 "Pending" (待处理) 的订单详情。厨师制作完成后，点击“完成”按钮，系统更新数据库中对应订单行的状态为 "Completed"，并刷新列表，从而实现前厅与后厨的信息同步。
+
+\subsection{系统界面与交互设计}
+为了保证系统风格的统一性和开发效率，系统使用了 ASP.NET 的母版页 (`Site.Master`) 技术。
+
+\begin{enumerate}
+    \item \textbf{导航栏统一}: 顶部导航栏和侧边栏菜单在母版页中定义，所有内容页（如 `Default.aspx`, `Orders.aspx`）均嵌套在 `ContentPlaceHolder` 中。
+    \item \textbf{响应式布局}: 引入了 CSS 框架（如 Bootstrap）的栅格系统，确保管理后台在不同分辨率的屏幕上都能保持良好的显示效果。
+\end{enumerate}
+
+\subsection{本章小结}
+本章详细阐述了餐饮管理系统的实现过程。从底层的数据库连接配置，到中间层的业务逻辑处理（包括登录验证、购物车算法），再到前端的界面展示，完整地构建了一个可运行的Web应用程序。通过使用 ASP.NET Web Forms 的服务器控件和 ADO.NET 数据访问技术，有效实现了系统的预定功能。
+
+\end{document}

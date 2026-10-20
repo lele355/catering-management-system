@@ -1,0 +1,238 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Site.master.cs" Inherits="CateringSystem.SiteMaster" %>
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head runat="server">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%: Page.Title %> - 悦食餐饮系统</title>
+    
+    <!-- 引入 FontAwesome 图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- 引入 Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        * { box-sizing: border-box; }
+        :root {
+            --primary-color: #22c55e;
+            --secondary-color: #16a34a;
+            --green-grad: linear-gradient(135deg, #86efac 0%, #22c55e 100%);
+            --glass-bg: rgba(255,255,255,0.58);
+            --text-dark: #1f2937;
+            --text-gray: #6b7280;
+            --bg-light: #f6fef9;
+            --hover-bg: rgba(34, 197, 94, 0.12);
+            --bamboo-500: #65a30d;
+            --bamboo-300: #a3e635;
+            --pine-700: #166534;
+            --paper: #fbfdf8;
+            --header-height: 64px;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        a { text-decoration: none; color: inherit; }
+        ul { list-style: none; margin: 0; padding: 0; }
+
+            /* 全站标题尽量使用绿色 */
+            h1, h2, h3, h4, .page-title { color: var(--primary-color); }
+
+            /* 简洁松竹装饰（图标式，低不透明度） */
+            .zen-deco{position:fixed;inset:0;pointer-events:none;z-index:0}
+            .zen-deco .zen-left, .zen-deco .zen-right{position:absolute;top:0;bottom:0;width:160px;opacity:.06;background-repeat:no-repeat;background-position:center;background-size:contain}
+            .zen-deco .zen-left{left:40px;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 600'><g fill='none' stroke='%2316a34a' stroke-width='6' stroke-linecap='round'><path d='M40 0 v600'/><path d='M40 80 h24 M40 160 h-20 M40 240 h24 M40 320 h-22 M40 400 h24 M40 480 h-20'/></g></svg>")}
+            .zen-deco .zen-right{right:40px;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 600'><g fill='none' stroke='%2316a34a' stroke-width='6' stroke-linecap='round'><path d='M40 0 v600'/><path d='M40 80 h-24 M40 160 h20 M40 240 h-24 M40 320 h22 M40 400 h-24 M40 480 h20'/></g></svg>")}
+
+            /* 玻璃质感：给常见卡片统一应用（不改动各页结构） */
+            .welcome-card,
+            .stat-box,
+            .chart-card,
+            .action-card,
+            .menu-left,
+            .menu-right,
+            .order-card,
+            .kitchen-header,
+            .setting-card,
+            .admin-container,
+            .modal-content{background:var(--glass-bg)!important;border:1px solid rgba(255,255,255,.35);-webkit-backdrop-filter:saturate(140%) blur(12px);backdrop-filter:saturate(140%) blur(12px);box-shadow:0 8px 24px rgba(34,197,94,.08)}
+
+            /* 统一按钮绿色渐变（不覆盖页面自定义 hover） */
+            .btn-logout,
+            .btn-pay,
+            .btn-save,
+            .btn-add,
+            .btn-submit{background:var(--green-grad);border:0;color:#fff}
+
+            /* 竹节分隔线已移除 */
+
+        /* 顶栏样式 */
+        .navbar {
+            background: var(--green-grad);
+            height: var(--header-height);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            box-shadow: var(--shadow-sm);
+            position: fixed;
+            top: 0; left: 0; width: 100%;
+            z-index: 1000;
+        }
+        .nav-brand {
+            font-size: 22px;
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .nav-brand i { font-size: 26px; }
+
+        .nav-menu { display: flex; gap: 10px; }
+        .nav-item { position: relative; }
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: var(--text-gray);
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+        .nav-link:hover, .nav-link.active {
+            background-color: rgba(255,255,255,.18);
+            color: #ffffff;
+        }
+
+        .user-profile { display: flex; align-items: center; gap: 15px; }
+        .user-info { text-align: right; line-height: 1.3; }
+        .user-name { display: block; font-weight: 700; font-size: 14px; }
+        .user-role { display: block; font-size: 12px; color: #999; }
+        .avatar {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: bold;
+        }
+        .btn-logout {
+            background: transparent; border: 1px solid var(--primary-color);
+            color: var(--primary-color); padding: 5px 12px;
+            border-radius: 15px; cursor: pointer; transition: all 0.3s;
+        }
+        .btn-logout:hover { background: var(--primary-color); color: white; }
+
+        .main-content {
+            margin-top: var(--header-height);
+            padding: 30px;
+            min-height: calc(100vh - var(--header-height));
+            animation: fadeIn 0.6s ease-out;
+            position: relative; z-index: 1; /* 保证位于装饰层之上 */
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        footer { text-align: center; padding: 20px; color: #b2bec3; font-size: 13px; border-top: 1px solid #eee; margin-top: 30px; }
+    </style>
+
+    <asp:ContentPlaceHolder ID="head" runat="server">
+    </asp:ContentPlaceHolder>
+</head>
+<body>
+    <form id="form1" runat="server">
+        <asp:ScriptManager ID="ScriptManager1" runat="server" />
+        <!-- 松竹图标式装饰层 -->
+        <div class="zen-deco"><div class="zen-left"></div><div class="zen-right"></div></div>
+        
+        <header class="navbar">
+            <a href="#" class="nav-brand">
+                <i class="fas fa-utensils"></i>
+                <span>悦食系统</span>
+            </a>
+
+            <ul class="nav-menu">
+                
+                <!-- 1. 管理员专属 -->
+                <asp:PlaceHolder ID="phManagerNav" runat="server" Visible="false">
+                    <li class="nav-item">
+                        <a href="AdminHome.aspx" class="nav-link <%= IsActive("AdminHome.aspx") %>">
+                            <i class="fas fa-user-shield"></i> 管理首页
+                        </a>
+                    </li>
+                </asp:PlaceHolder>
+
+                <!-- 2. 服务员专属 -->
+                <asp:PlaceHolder ID="phWaiterNav" runat="server" Visible="false">
+                    <li class="nav-item">
+                        <a href="Default.aspx" class="nav-link <%= IsActive("Default.aspx") %>">
+                            <i class="fas fa-home"></i> 前台首页
+                        </a>
+                    </li>
+                </asp:PlaceHolder>
+
+                <!-- 3. 公共功能 (点餐/订单) -->
+                <asp:PlaceHolder ID="phCommonNav" runat="server" Visible="false">
+                    <li class="nav-item">
+                        <a href="Menu.aspx" class="nav-link <%= IsActive("Menu.aspx") %>">
+                            <i class="fas fa-book-open"></i> 电子菜单
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="Orders.aspx" class="nav-link <%= IsActive("Orders.aspx") %>">
+                            <i class="fas fa-list-alt"></i> 订单管理
+                        </a>
+                    </li>
+                </asp:PlaceHolder>
+
+                <!-- 4. 后厨功能 -->
+                <asp:PlaceHolder ID="phKitchenNav" runat="server" Visible="false">
+                    <li class="nav-item">
+                        <a href="Kitchen.aspx" class="nav-link <%= IsActive("Kitchen.aspx") %>">
+                            <i class="fas fa-fire-alt"></i> 后厨看板
+                        </a>
+                    </li>
+                </asp:PlaceHolder>
+
+                <!-- 5. 系统设置 (管理员) -->
+                <asp:PlaceHolder ID="phAdminSettings" runat="server" Visible="false">
+                     <li class="nav-item">
+                        <a href="AdminDashboard.aspx" class="nav-link <%= IsActive("AdminDashboard.aspx") %>">
+                            <i class="fas fa-chart-line"></i> 营收报表
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="SystemSettings.aspx" class="nav-link <%= IsActive("SystemSettings.aspx") %>">
+                            <i class="fas fa-cogs"></i> 系统设置
+                        </a>
+                    </li>
+                </asp:PlaceHolder>
+            </ul>
+
+            <div class="user-profile">
+                <div class="user-info">
+                    <span class="user-name"><%= Session["RealName"] ?? "访客" %></span>
+                    <span class="user-role"><%= GetRoleName() %></span>
+                </div>
+                <div class="avatar"><%= GetInitials() %></div>
+                <asp:Button ID="btnLogout" runat="server" Text="退出" CssClass="btn-logout" OnClick="btnLogout_Click" />
+            </div>
+        </header>
+
+        <div class="main-content">
+            <asp:ContentPlaceHolder ID="MainContent" runat="server">
+            </asp:ContentPlaceHolder>
+        </div>
+
+        <footer>
+            &copy; <%: DateTime.Now.Year %> 悦食连锁餐饮管理系统
+        </footer>
+    </form>
+</body>
+</html>
